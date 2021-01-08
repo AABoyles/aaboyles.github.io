@@ -1,11 +1,15 @@
 [
-  "Uncompiled",
+  "Anthony A. Boyles",
   {
-    "text": "Github",
-    "url": "https://github.com/aaboyles/uncompiled"
+    "text": "Cofounder",
+    "url": "https://ephemer.ai/"
   },
   {
-    "text": "Another Page",
-    "url": "?q=pages/AnotherPage.md"
+    "text": "Coder",
+    "url": "https://github.com/aaboyles/"
+  },
+  {
+    "text": "Résumé",
+    "url": "?q=pages/Resume.md"
   }
 ]
