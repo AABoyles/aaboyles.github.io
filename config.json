@@ -1,0 +1,19 @@
+{
+  "title": "Anthony A. Boyles",
+  "baseURL": "https://aaboyles.github.io/",
+  "menu": [
+    "Anthony A. Boyles",
+    {
+      "text": "Writings",
+      "url": "https://aaboyles.github.io/#essays"
+    },
+    {
+      "text": "Projects",
+      "url": "https://github.com/aaboyles/"
+    },
+    {
+      "text": "Résumé",
+      "url": "https://aaboyles.github.io/?q=pages/Resume.md"
+    }
+  ]
+}
