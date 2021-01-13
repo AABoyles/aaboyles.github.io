@@ -7,15 +7,15 @@ base64stringify <- function(path){
   paste0("data:image/png;base64 ",knitr::image_uri(path))
 }
 knitr::opts_chunk$set(echo = TRUE, fig.process=base64stringify)
-library(ggplot2)
-library(magrittr)
 ```
 
 Suppose we wanted to forecast the probability of an event occurring sometime in the near future. We can (and should) adjust our forecast as time passes. Every moment the event doesn't occur is another moment in which it no longer can, so probability estimates should go downwards and converge on zero at the moment the forecast window resolves negatively. But how do we decide what the probability should be as a function of the remaining amount of time?
 
 Intuition suggests we might simply draw a straight line descending from your present estimate to zero at resolve time, like so:
 
-```{r warning=FALSE, message=FALSE, fig.process=base64stringify}
+```{r}
+library(ggplot2)
+library(magrittr)
 data.frame(
   x = 1:365,
   y = 1-(1:365)/365

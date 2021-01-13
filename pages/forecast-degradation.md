@@ -10,6 +10,8 @@ Intuition suggests we might simply draw a straight line descending from your pre
 
 
 ```r
+library(ggplot2)
+library(magrittr)
 data.frame(
   x = 1:365,
   y = 1-(1:365)/365
