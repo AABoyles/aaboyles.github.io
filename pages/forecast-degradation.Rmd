@@ -1,0 +1,55 @@
+# Forecast Degradation Functions
+
+## Introduction
+
+```{r setup, include=FALSE}
+base64stringify <- function(path){
+  paste0("data:image/png;base64 ",knitr::image_uri(path))
+}
+knitr::opts_chunk$set(echo = TRUE, fig.process=base64stringify)
+library(ggplot2)
+library(magrittr)
+```
+
+Suppose we wanted to forecast the probability of an event occurring sometime in the near future. We can (and should) adjust our forecast as time passes. Every moment the event doesn't occur is another moment in which it no longer can, so probability estimates should go downwards and converge on zero at the moment the forecast window resolves negatively. But how do we decide what the probability should be as a function of the remaining amount of time?
+
+Intuition suggests we might simply draw a straight line descending from your present estimate to zero at resolve time, like so:
+
+```{r warning=FALSE, message=FALSE, fig.process=base64stringify}
+data.frame(
+  x = 1:365,
+  y = 1-(1:365)/365
+) %>%
+  ggplot(aes(x = x, y = y)) + geom_line()
+```
+
+This is not a terrible strategy, all things considered. It exhibits some of the most important properties of a correct-defined degradation function:
+
+* It is strictly decreasing (e.g. we are never in the paradoxical state where the probability increases in spite of there being less time for the resolving event to occur[Note that this is merely updating with respect to the passage of time. Other information may indicate that an event has become more likely, but that's exogenous to any approach we can define without already possessing that information.](sidenote).)
+
+However, it isn't strictly *correct*. Suppose that we believe, on the last day of the challenge, that the probability of a positive resolution is 1%. Not based on any super strong evidence, mind you--you just don't think there's a 0% outcome probability on any given day.[For convenience, we'll assume that the predictions are being generated over a time series of discrete days, though any discrete unit of time may be applicable.](sidenote) So, given this, what should you have predicted the day before?
+
+The outcome probability over the remaining prediction window is the conjunctive probability that it doesn't occur in any of the window's constituent days, so $1-(1-0.01)^2$. We can generalize this in a few ways. Suppose we want to assess that probability over $n$ days--that's given by replacing the exponent ($1-(1-0.01)^n$). And Suppose we want to assess the probability with a variable probability, instead of a constant 0.01. To do this, replace the probability with a variable, $p$, as in $1-(1-p)^n$. So, given this arrangement, what's the probability at the beginning of the year?
+
+```{r}
+data.frame(
+  x = 365:1,
+  y = 1-(1-0.01)^(1:365)
+) %>%
+  ggplot(aes(x = x, y = y)) + geom_line()
+```
+
+So, given a daily probability of 0.01, we should start a year-long forecast with a probability of 98%. Which is fine, but we need to be able to go the opposite direction. If I did my algebra correctly, the transformed equation looks something like this:
+
+$$p\_s=1-exp(ln(1-p\_w)/n)$$
+where $p\_s$ is the independent probability of the event on each discrete time step, $p\_w$ is the annual probability, $n$ is the number of discrete
+
+Given an initial probability over the course of some finite time window, what's the continuous function we need in order to provide an honest degradation of our prediction?
+
+```{r}
+data.frame(
+  x = 10000:1,
+  y = 1-(1-0.002)^(1:10000)
+) %>%
+  ggplot(aes(x = x, y = y)) + geom_line()
+```
