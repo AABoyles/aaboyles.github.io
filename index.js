@@ -18,11 +18,11 @@
       self.config = config;
       document.querySelector('title').innerText = config.title;
       config.menu.forEach(addMenuItem);
+      header.classList.remove('hidden');
     });
 
-  let params = new URLSearchParams(document.location.search.substring(1));
-  let post = params.get('q') || 'README.md';
-  let main = document.querySelector('article');
+  let main = document.querySelector('main');
+  let article = document.querySelector('article');
 
   let converter = new showdown.Converter({
     'tables': true, 
@@ -39,30 +39,65 @@
     document.body.appendChild(script);
   };
 
-  fetch(post)
-    .then(res => res.text())
-    .then(md => {
-      let html = converter.makeHtml(md);
-      main.innerHTML = html;
+  let renderPage = page => {
+    main.classList.add('hidden');
+    fetch(page)
+      .then(res => res.text())
+      .then(md => {
+        let html = converter.makeHtml(md);
+        article.innerHTML = html;
 
-      document.querySelectorAll('pre code').forEach(hljs.highlightBlock);
+        let content = parser.parseFromString(html, 'text/html');
+        let toc = '';
+        content.querySelectorAll('h1, h2, h3').forEach(header => {
+          if(header.tagName == "H1"){
+            toc += `<a class="nav-link w-100 fw-bold" href="#${header.id}">${header.innerText}</a>`;
+          } else if(header.tagName == "H2"){
+            toc += `<a class="nav-link w-100 fst-italic" href="#${header.id}">${header.innerText}</a>`;
+          } else {
+            toc += `<a class="nav-link w-100 ms-3 my-1" href="#${header.id}">${header.innerText}</a>`;
+          }
+        });
+        document.querySelector('#toc').innerHTML = toc;
+        new bootstrap.ScrollSpy(document.body, { target: '#toc', offset: 40 });
 
-      renderMathInElement(main, {
-        delimiters: [
-          {left: "$$", right: "$$", display: true},
-          {left: "$", right: "$", display: false},
-          {left: "\\(", right: "\\)", display: false},
-          {left: "\\[", right: "\\]", display: true}
-        ]
+        document.querySelectorAll('pre code').forEach(hljs.highlightBlock);
+
+        renderMathInElement(main, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "\\[", right: "\\]", display: true}
+          ]
+        });
+
+        let promises = [];
+        let scripts = [];
+        content.querySelectorAll('script').forEach(script => {
+          if(script.src) promises.push(loadScript(script.src));
+          else scripts.push(script.innerText);
+        });
+        Promise.all(promises).then(() => scripts.forEach(eval));
+        main.classList.remove('hidden');
       });
+  }
 
-      let content = parser.parseFromString(html, 'text/html');
-      let promises = [];
-      let scripts = [];
-      content.querySelectorAll('script').forEach(script => {
-        if(script.src) promises.push(loadScript(script.src));
-        else scripts.push(script.innerText);
-      });
-      Promise.all(promises).then(() => scripts.forEach(eval));
-    });
+  let params = new URLSearchParams(document.location.search.substring(1));
+  renderPage(params.get('q') || 'README.md');
+
+  // The proper way to do this is with position = "sticky", but...
+  // ...that requires the thing to be in the document flow, which creates a bunch of annoying spaces.
+  // For now, this is easier and works.
+  document.addEventListener('scroll', function(e) {
+    console.log(window.scrollY)
+    let style = document.querySelector('#toc').style;
+    if(window.scrollY > (7 * parseFloat(getComputedStyle(document.documentElement).fontSize) - 16)){
+      style['position'] = "fixed";
+      style['top'] = "calc(1rem + 16px)";
+    } else {
+      style['position'] = "absolute";
+      style['top'] = "8rem";
+    }
+  });
 })();
