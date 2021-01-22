@@ -2,18 +2,25 @@
   "title": "Anthony A. Boyles",
   "baseURL": "https://aaboyles.github.io/",
   "menu": [
-    "Anthony A. Boyles",
     {
-      "text": "Writings",
-      "url": "https://aaboyles.github.io/#essays"
+      "text": "Anthony A. Boyles",
+      "url": "/"
     },
     {
       "text": "Projects",
       "url": "https://github.com/aaboyles/"
     },
     {
+      "text": "Writings",
+      "url": "/#personal"
+    },
+    {
       "text": "Résumé",
-      "url": "https://aaboyles.github.io/?q=pages/Resume.md"
+      "url": "?q=pages/Resume.md"
+    },
+    {
+      "text": "Get in Touch",
+      "url": "/#getintouch"
     }
   ]
 }
