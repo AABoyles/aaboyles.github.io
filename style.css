@@ -3,13 +3,9 @@ body {
   margin: 0;
   padding-left: 0;
 }
-header {
-  position: fixed;
-  top: 0px;
-  padding: 8px 0 8px 25%;
-  width: 100%;
-  background-color:inherit;
-  z-index: 1;
+#header-wrapper {
+  background-color: inherit;
+  padding-left: 23%;
 }
 header > span {
   margin-right: 1rem;
@@ -24,7 +20,7 @@ a[href*="//"]::after {
 #toc {
   position: absolute;
   top: 8rem;
-  left: 12.5%;
+  left: 10%;
   width: 12%;
 }
 /* The .nav-link rules make the pretty, dffuse shadowing on the Table of Contents for the header that you're viewing */
@@ -33,6 +29,7 @@ a[href*="//"]::after {
   color: rgb(17, 17, 17) !important;
   text-shadow: none;
   transition: text-shadow 0.5s;
+  padding: 0 .5rem;
 }
 .nav-link.active {
   text-shadow: 0px 0px 10px black;
@@ -54,8 +51,8 @@ Adapted from https://css-tricks.com/hash-tag-links-padding/
 h1::before, h2::before, h3::before { 
   display: block; 
   content: " "; 
-  margin-top: -calc(1.5rem + 16px);
-  height: calc(1.5rem + 16px); 
+  margin-top: -calc(3rem);
+  height: calc(3rem); 
   visibility: hidden; 
   pointer-events: none;
 }
@@ -87,12 +84,16 @@ section>ol, section>ul {
   font-size: 1em;
 }
 /* Not working very hard to keep it responsive, but we'll at least clean it up so it's readable on mobile */
-@media only screen and (max-width: 600px) {
-  header {
-    padding: 0;
+@media only screen and (max-width: 991px) {
+  #header-wrapper {
+    padding-left: 0;
+    background: transparent;
+  }
+  #header {
+    text-align: right;
   }
   article{
-    padding: 10px;
+    padding: 0 0 0 1rem;
   }
   #toc {
     display: none;
@@ -103,11 +104,11 @@ section>ol, section>ul {
   body {
     font-size: 1;
   }
-  header {
+  #header-wrapper {
     display: none;
   }
   article{
-    padding: 10px;
+    padding: 0 0 0 1rem;
   }
   #toc {
     display: none;

@@ -1,12 +1,13 @@
 (function(){
 
-  let header = document.querySelector('header');
+  let header = document.querySelector('#header');
   let addMenuItem = item => {
-    let node = document.createElement('span');
+    let node = document.createElement('li');
+    node.classList.add('nav-item');
     if(typeof item == "string"){
-      node.innerText = item;
+      node.innerText = `<a class="nav-link" href="#">${item}</a>`;
     } else {
-      node.innerHTML = `<a href="${item.url || config.baseURL || '#'}">${item.text}</a>`;
+      node.innerHTML = `<a class="nav-link" href="${item.url || config.baseURL || '#'}">${item.text}</a>`;
       if(item.style) node.style = item.style;
     }
     header.append(node);
@@ -89,12 +90,11 @@
   // The proper way to do this is with position = "sticky", but...
   // ...that requires the thing to be in the document flow, which creates a bunch of annoying spaces.
   // For now, this is easier and works.
-  document.addEventListener('scroll', function(e) {
-    console.log(window.scrollY)
+  document.addEventListener('scroll', e => {
     let style = document.querySelector('#toc').style;
-    if(window.scrollY > (7 * parseFloat(getComputedStyle(document.documentElement).fontSize) - 16)){
+    if(window.scrollY > (5 * parseFloat(getComputedStyle(document.documentElement).fontSize))){
       style['position'] = "fixed";
-      style['top'] = "calc(1rem + 16px)";
+      style['top'] = "3rem";
     } else {
       style['position'] = "absolute";
       style['top'] = "8rem";
