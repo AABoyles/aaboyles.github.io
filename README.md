@@ -28,12 +28,12 @@ As a side effect of my tenure on MicrobeTrace, I've developed a fondness for opt
 
 ## Personal
 
-I am married with a child and a dog. These take up an awful lot of time. On the rare occasion I do have spare time, I enjoy [participating in forecasting competitions](#forecasting) and [augmenting the capabilities of my smart house](#smarthouse). I occasionally write about a number of topics that interest me. Some of the work of which I'm somewhat proud includes:
+In my spare time, I enjoy participating in forecasting competitions and augmenting the capabilities of my smart house. I occasionally write about a number of topics that interest me. Some of the work of which I'm somewhat proud includes:
 
 ### Forecasting
 
 * [Forecast Degradation Functions](?q=pages/forecast-degradation.md)
-* [The Elon Musk Forecast Correction Function](/Essays/portfolio/ElonMuskForecastCorrectionFunction.html)
+* [The Elon Musk Forecast Correction Function](?q=pages/musk-forecast-correction.md)
 * [Computing Metaculus Priors](/Essays/portfolio/ComputingMetaculusPriors.html)
 
 ### Errata
