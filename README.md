@@ -8,7 +8,6 @@ I write a lot of code. Some of it might be useful to people other than me. Some 
 
 * **[MicrobeTrace](https://github.com/CDCgov/MicrobeTrace)** - A visualization app for molecular epidemiology[See <a href="#microbetrace">MicrobeTrace</a>](sidenote).
 * **[LessWrong-Portable](https://github.com/aaboyles/LessWrong-Portable)** - A flexible nodejs project for scraping multiple web pages into a single epub for reading on e-readers.
-* **[`uncompiled`](https://github.com/aaboyles/uncompiled)** - The code behind this very site[See <a href="#meta">Meta</a>](sidenote)
 
 ### MicrobeTrace
 
@@ -26,27 +25,35 @@ As a side effect of my tenure on MicrobeTrace, I've developed a fondness for opt
 * **[Network-Demos](]/Network-Demos/)** - A small directory of approaches to improving network performance.[The punchline is to render on a canvas.](marginnote)
 * **[Graph-Embed](https://ephemer-ai.github.io/graph-embed/#)** - A technology demonstration leveraging the lessons-learned of Network-Demos to enable embeddable, url-encoded network visualizations.
 
+### Meta
+
+I also wrote the software for this site. [<a href="?q=pages/meta.md">Click here to read the nerdy details about this site.</a>](sidenote) The associated projects include:
+
+* **[aaboyles.github.io](https://aaboyles.github.io/)** - The repo for this site.
+* **[`uncompiled`](/uncompiled/)** - The site generator this site uses.
+* **[showdown-tufte](https://github.com/AABoyles/showdown-tufte)** - The showdown extension that makes the `uncompiled` workflow possible.
+
 ## Personal
 
 In my spare time, I enjoy participating in forecasting competitions and augmenting the capabilities of my smart house. I occasionally write about a number of topics that interest me. Some of the work of which I'm somewhat proud includes:
 
 ### Forecasting
 
-* [Forecast Degradation Functions](?q=pages/forecast-degradation.md)
-* [The Elon Musk Forecast Correction Function](?q=pages/musk-forecast-correction.md)
+* [Forecast Degradation Functions](/?q=pages/forecast-degradation.md)
+* [The Elon Musk Forecast Correction Function](/?q=pages/musk-forecast-correction.md)
 * [Computing Metaculus Priors](/Essays/portfolio/ComputingMetaculusPriors.html)
+
+### Smart House / Quantified Self
+
+* [Designing the Actually Smart House](/Essays/essays/DesigningTheActuallySmartHouse.html)
+
+### Transhumanism
+
+* [Cryonic Demography](/Essays/portfolio/CryonicDemography.html)
 
 ### Errata
 
-* [Cryonic Demography](/Essays/portfolio/CryonicDemography.html)
-* [Designing the Actually Smart House](/Essays/essays/DesigningTheActuallySmartHouse.html)
 * [The Monte Hall Problem and Optimal Guessing Strategy on the GRE](/Essays/essays/MonteHallGREGuessing.html)
-
-## Meta
-
-This site is largely inspired by [gwern.net](https://gwern.net/), though it doesn't share any code with it.[I considered forking it, but I would take awhile to get up to speed in Haskell and <a href="https://github.com/gwern/gwern.net">Gwern's repository is enormous</a>](sidenote) Instead, it's based on an original markdown site generator called [`uncompiled`](/uncompiled/).[I created it essentially just to make this site.](sidenote)
-
-I've made many (many) previous attempts at constructing a site like this. If you were truly motivated, you might still be able to find some scattered around the internet. If you should happen across one, please bear in mind that the further back in time you go, the less likely I am to endorse the content that past me felt was vital to publish in this way. If something I've said (or done) is of relevance to you, rather than assume I believe something because I once did (or said something to that effect), *please ask*.
 
 ## Get in Touch
 
