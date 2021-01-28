@@ -1,0 +1,342 @@
+# Cryonic Demography
+
+```{r setup, include=FALSE}
+base64stringify <- function(path){
+  paste0("data:image/png;base64 ", knitr::image_uri(path))
+}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE,
+  fig.process=base64stringify
+)
+```
+
+## Collecting Data
+
+Cryonics doesn't have an especially long history or many patients, making it tractable to collect data on nearly all of them. Moreover, cryonicists tend to be inclined towards more and better documentation--after all, who knows what data will be important at revival time? Might as well store as much as possible. Also being of a generally transparent disposition (in the interest of de-mystifying the process for people who might be interested if the process and organization is laid bare before them), they tend to publish case information online:
+
+* [Alcor](http://alcor.org/cases.html)
+* [Cryonics Institute](http://www.cryonics.org/case-reports/)
+* [KrioRus](http://kriorus.ru/en/cryopreserved%20people)
+* [Oregon Cryonics](http://www.oregoncryo.com/caseReports.html)
+
+That said, assembling this data isn't a trivial task. Many cryonicists (or their survivors) prefer not to have their information shared publicly. Accordingly, the existing cryonics organizations' public records are spotty. The existing organizations are also not the only one to have ever existed, nor are they the first. Finding records from defunct organizations imposes a deep degree of detection, inference, and guess work (not to mention [earlier work](http://www.alcor.org/cryonics/cryonics9207.txt) and luck). This was, by far, the most time-consuming piece of this project, as data collection often is.[Since I first wrote this, another project led by Mati Roy has endeavoured to collect a wider swath of data on the existing cryonics patient population. <a href="https://docs.google.com/spreadsheets/d/1vBrlNvPkPQbLKxtSUlTF_ZpUS4lwW2W7lENRj9Gdk3I/edit?usp=sharing">See his spreadsheet here.</a>](sidenote)
+
+```{r loadData, message=FALSE, warning=FALSE}
+# Load from Google Sheets
+library(readr)
+library(dplyr)
+cryonauts <- read_csv('https://docs.google.com/spreadsheets/d/e/2PACX-1vS7nOdzuAUs5bSoHkZw1gJTWJT-MVbMicXK8iIUIkZwFqUVh2zmC8Cl_QTz1j0kriMW3ycobYDDWFuG/pub?output=csv') %>%
+  mutate(DorCDate = as.Date(DorCDate))
+```
+
+## Cryonauts through time
+
+To whet our appetite, let's look at the growth of cryonics.
+
+```{r growthOverTime, message=FALSE, warning=FALSE}
+library(ggplot2)
+cumulative <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate)) %>%
+  mutate(cumulation = 1:nrow(.))
+
+ggplot(cumulative, aes(x=DorCDate, y=cumulation)) +
+  geom_line() +
+  labs(x = "Date", y = "Cryonics Patients")
+```
+
+This graph shows the number of people cryopreserved. As a sanity check, [Futurism put together an infographic](https://futurism.com/images/cryonics/) including a graph of the growth of cryonics that largely agrees with this (though their version looked only at [Alcor](http://alcor.org/AboutAlcor/membershipstats.html), [Cryonics Institute](http://www.cryonics.org/ci-landing/member-statistics/) and [KrioRus Statistics](http://kriorus.ru/en/cryopreserved people), instead of all recorded cases, leading to slightly lower counts).
+
+One important note on dates: KrioRus reports "cryopreservation date", rather than the date of deanimation. However, it's a bit difficult to tell what this means, since cryopreservation is a process which takes place over the course of several days. The other organizations all report the date of deanimation, except for [TransTime](https://www.transtime.com/) which reports nothing and whose cases must be inferred from other sources.
+
+## Modeling Growth
+
+I'm going to use a couple of models: linear (for posterity), quadratic (since it's the most intuitive curve that might fit this well), exponential (because this actually looks exponential to me), and a linear model of the predictions of the others (basically to estimate the optimal weight of the other models).
+
+```{r growthModels, message=FALSE, warning=FALSE}
+library(lubridate)
+library(tidyr)
+Year <- rep(min(year(cryonauts$DorCDate), na.rm = TRUE):max(year(cryonauts$DorCDate), na.rm = TRUE), each=12)
+Month <- rep(1:12, length(Year)/12)
+yms <- data.frame(Year, Month)
+
+monthly <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate)) %>%
+  mutate(
+    Year = year(DorCDate),
+    Month = month(DorCDate)
+  ) %>%
+  group_by(Year, Month) %>%
+  dplyr::summarise(number = n()) %>%
+  ungroup() %>%
+  right_join(yms) %>%
+  dplyr::filter(!(Year >= year(now()) & Month >= month(now()))) %>%
+  dplyr::arrange(Year, Month) %>%
+  mutate(
+    number = ifelse(is.na(number), 0, number),
+    cumulation = cumsum(number),
+    logCum = log1p(cumulation),
+    YM = Year + (Month-1)/12,
+    YM2 = YM^2,
+    date = as.Date(paste(Year, Month, "01", sep = "-"))
+  )
+
+LinM  <- lm(cumulation ~ YM, data = monthly)
+LinP  <- LinM %>% predict %>% unname
+monthly <- cbind(monthly, LinP)
+
+QuadM <- lm(cumulation ~ YM + YM2, data = monthly)
+QuadP <- QuadM %>% predict %>% unname
+monthly <- cbind(monthly, QuadP)
+
+ExpM  <- lm(logCum ~ YM, data = monthly)
+ExpP  <- ExpM %>% predict %>% unname %>% expm1
+monthly <- cbind(monthly, ExpP)
+
+AvgM  <- lm(cumulation ~ LinP + QuadP + ExpP, data = cbind(monthly, LinP, QuadP, ExpP))
+AvgP  <- AvgM %>% predict %>% unname
+monthly <- cbind(monthly, AvgP)
+
+long <- monthly %>%
+  pivot_longer(cols = c(LinP:AvgP), names_to="model")
+
+ggplot(long, aes(x=date, y=value, color=model)) +
+  geom_line() +
+  geom_line(aes(y=cumulation), color="black") +
+  labs(x = "Date", y = "")
+```
+
+OK, we have an ensemble model that does quite well based solely on growth rates. What does it say about the future of Cryonics?
+
+```{r cryonicsGrowthPrediction}
+Year <- rep(min(year(cryonauts$DorCDate), na.rm = TRUE):(max(year(cryonauts$DorCDate), na.rm = TRUE)+40), each=12)
+Month <- rep(1:12, length(Year)/12)
+Fmonthly <- data.frame(Year, Month) %>%
+  mutate(
+    YM = Year + (Month-1)/12,
+    YM2 = YM^2,
+    date = as.Date(paste(Year, Month, "01", sep = "-"))
+  )
+
+FLinP  <- LinM %>% predict(Fmonthly) %>% unname
+Fmonthly <- cbind(Fmonthly, LinP = FLinP)
+
+FQuadP <- QuadM %>% predict(Fmonthly) %>% unname
+Fmonthly <- cbind(Fmonthly, QuadP = FQuadP)
+
+FExpP  <- ExpM %>% predict(Fmonthly) %>% unname %>% expm1
+Fmonthly <- cbind(Fmonthly, ExpP = FExpP)
+
+FAvgP  <- AvgM %>% predict(cbind(Fmonthly, LinP=FLinP, QuadP=FQuadP, ExpP=FExpP)) %>% unname
+Fmonthly <- cbind(Fmonthly, AvgP = FAvgP)
+
+long <- monthly %>%
+  select(names(Fmonthly)) %>%
+  rbind(Fmonthly) %>%
+  mutate(cumulation = c(monthly$cumulation, rep(NA, nrow(Fmonthly)))) %>%
+  pivot_longer(cols = c(LinP:AvgP), names_to="model")
+
+ggplot(long, aes(x=date, y=value, color=model)) +
+  geom_line()
+```
+
+It appears that Cryonics is unlikely to experience explosive growth in the next 20 years. Obviously, this discounts any substantive events, like a successful demonstration of a complete revival of a cryopreserved large animal ([rabbit](http://www.brainpreservation.org/asc_rabbit_fulleval/) or [dog](http://www.alcor.org/Library/html/tbwcanine.html) ([see also](https://www.ncbi.nlm.nih.gov/pubmed/1188189?dopt=Abstract) or [pig](https://www.technologyreview.com/s/611007/researchers-are-keeping-pig-brains-alive-outside-the-body/)) seem the likeliest cases).
+
+So what about the cryonics patients themselves? What trends can we identify about them?
+
+## Age and Gender
+
+The simplest demographic features are age (at time of deanimation) and gender. To start with, let's look at gender. My preliminary suspicion is that men will vastly outnumber women. After all, it's been reported that [85% of cryonics signups are men](http://www.ozy.com/rising-stars/fighting-for-gender-equality-in-the-afterlife/73801).
+
+```{r GenderOverTime, warning=FALSE}
+dates <- cryonauts %>% dplyr::filter(!is.na(DorCDate))
+
+w <- dates %>%
+  dplyr::filter(Gender=="Female") %>%
+  mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+m <- dates %>%
+  dplyr::filter(Gender=="Male") %>%
+  mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+ggplot() +
+  geom_line(aes(x = w$DorCDate, y = w$cumulation), color="pink") + 
+  geom_line(aes(x = m$DorCDate, y = m$cumulation), color="lightblue") +
+  labs(x = "Date", y = "Number of Cryonics Patients")
+```
+
+Thus far, it seems men outnumber women roughly 3:2. However, the ratio was roughly 1:1 until the mid-90's. This is much closer to gender parity than I expected. [Related](https://books.google.com/books?id=WxOJDgAAQBAJ&lpg=PT25&dq=feminism%20and%20cryonics&pg=PT20#v=onepage&q=feminism%20and%20cryonics&f=false)
+
+What about the distribution of age? This should be a left-skewed distribution (older people are more likely to die than younger people). Moreover, We can weakly predict that women will enjoy a slightly more left-skewed curve, outliving men in the cryonics community just as they tend to in the larger community.
+
+```{r AgeDistributionByGender, warning=FALSE}
+ggplot(cryonauts, aes(Age, fill=Gender)) +
+  geom_density(alpha = 0.5)
+```
+
+Unsurprisingly, the people who are cryopreserved are largely older. And it does look as though women outlive men by around 7 years in the cryonics community.
+
+Does this match the curve of ages-at-death in the larger population? This is a surprisingly difficult question to answer! To start, let's look at the mean age-at-deanimation of cryonics patients (along with the min and max ages, just for fun).
+
+```{r AgeTrends, warning=FALSE}
+ages <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate), !is.na(Age)) %>%
+  mutate(
+    MaxAge = cummax(Age),
+    MeanAge = cummean(Age),
+    MinAge = cummin(Age)
+  ) %>%
+  pivot_longer(MaxAge:MinAge, names_to = "Ages")
+
+ggplot(ages, aes(x = DorCDate, y = value, color = Ages)) +
+  geom_line() +
+  labs(x = "Date", y = "Age")
+```
+
+The minimum age drops precipitously. Intuitively, this is about what we should expect: we can't cryopreserve people who aren't born yet, so the minimum age is going to hit zero at some point in the future, and never decrease again.
+
+The maximum age climbs, which is also to be expected. As more people die and enter cryostorage, some of them should, just by random draws from the [Gompertz distribution](https://en.wikipedia.org/wiki/Gompertz_distribution), be older than the rest of the population. This should behave roughly like the curve of the record for the oldest person, gradually pushing up towards 120 or so (barring any major breakthroughs in longevity-extension efforts).
+
+The mean population is the most interesting (and relevant to the motivating question). We expect that it should roughly trace the [global life expectancy](https://data.worldbank.org/indicator/SP.DYN.LE00.IN). However, because life expectancies are measured by country by year-of-birth, mapping from age at death (the data we have) to life expectancy (the data we need) is prohibitively difficult--we don't generally know the patients' birth country for one.
+
+We can however, spot-check the mean age at death. The mean age of death has held steadily around 65 since the 2000's. These people would have been born around 1950. According to [Our World In Data](https://ourworldindata.org/life-expectancy/), the world-wide life expectancy in 1950 was 48, and the industrialized world (US, Europe, USSR, and Oceania) was closer to 60. So Cryonicists are probably living at least a little longer than their generational cohort, on average. This may be a function of wealth, among other things: access to cryonics is expensive, and far from a priority budget item for most humans.
+
+## Procedural Preferences
+
+Not all cryonic procedures are exactly the same, and no cryonics provider offers all options. In general, there are two different types: whole body, which is basically exactly what you think, and neuropreservation, which is cryopreservation of only the head. More recently, Oregon Cryonics has begun performing brain-only preservations. and finally, there are separate whole body and neuro preservations.
+
+```{r ProcedureDistributionOverTime, warning=FALSE}
+procedures <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate), !is.na(OriginalType)) %>%
+  group_by(OriginalType) %>%
+  dplyr::mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+ggplot(procedures, aes(x = DorCDate, y = cumulation, color = OriginalType)) +
+  geom_line() +
+  labs(x = "Date", y = "Number of Cryonics Patients")
+```
+
+## Suspension Failure
+
+Perhaps the most important and interesting inferences we can make regard the likelihood that a suspended person will be brought back. Because this is completely unknown (until someone is successfully revived), we can only make inferences based on estimates of probabilities of the things that may prevent someone from being revived. And the one bottleneck about which we have data is suspension failure.
+
+```{r preservationFailures, warning=FALSE}
+failures <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate), Status != "Preserved") %>%
+  mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+ggplot(failures, aes(x = DorCDate, y = cumulation)) +
+  geom_line() +
+  labs(x = "Date", y = "Failed Suspensions")
+```
+
+Here we see the number of suspension failures over time. Note that I didn't collect data on the date of the failure, so these are plotted against the date of deanimation, which should be good enough. Fortunately, there have been few enough that it almost makes the most sense to discuss them individually, rather than measure any aggregate statistics.
+
+Of the 29 known suspension failures, the lion's share belong to the Cryonics Society of California. Led by the bold and hard-working but ill-fated Bob Nelson, CSC stored 10 patients, of whom all but one were lost in the [Chatsworth Disaster](https://hpluspedia.org/wiki/History_of_cryonics#Chatsworth_Scandal), hence the precipitous rise in the late 60's. Several others were cases of survivors refusing to make maintenance payments. Sadly, only one cryonics patient preserved before 1974 has been maintained.
+
+[Two were killed in the 9-11 World Trade Center attacks](http://alcor.org/problems.html). [Two were private cases that suffered a freezer failure](https://www.theguardian.com/science/2006/mar/17/france.internationalnews). I do not know about many other cases.
+
+Relative to the number of successful cases, these failures are looking less and less likely:
+
+```{r SuccessesAndFailures}
+statuses <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate)) %>%
+  group_by(Status) %>%
+  dplyr::mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+ggplot(statuses, aes(x = DorCDate, y = cumulation, color = Status)) +
+  geom_line() +
+  labs(x = "Date", y = "Cryonics Patients")
+```
+
+As time wears on, the proportion of failures is decreasing. This is a very positive developmnetal direction, and so long as there aren't any facilities crises, it looks to continue this way. As a proportion of current cryonics cases, this failure rate may be a reasonable estimate for probabilistic cryonics failures in the future.
+So, what *is* that proportion?
+
+```{r preservationProportion}
+failures <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate)) %>%
+  mutate(
+    c = 1,
+    failure = ifelse(Status=="Preserved", 0, 1),
+    failures = cumsum(failure),
+    proportion = 1-(failures / cumsum(c))
+  )
+
+ggplot(failures, aes(x = DorCDate, y = proportion)) +
+  geom_line() +
+  labs(x = "Date", y = "Proportion of Patients Still Cryopreserved")
+```
+
+94% and rising. This may form a useful piece of evidence for estimating the more general probability of cryonics succeeding. Here are some other attempts at estimating that probability:
+
+* http://alcor.org/Library/html/WillCryonicsWork.html
+* http://lesswrong.com/lw/7sj/how_likely_is_cryonics_to_work/
+* http://www.merkle.com/cryo/probability.html
+* https://www.jefftk.com/p/more-cryonics-probability-estimates
+* https://www.gwern.net/plastination
+* https://www.gwern.net/Cryonics
+* https://www.cryonicscalculator.com/
+
+## Organizational History
+
+What about the provider organizations?
+
+```{r originalorganization}
+providers <- cryonauts %>%
+  dplyr::filter(!is.na(DorCDate), !is.na(OriginalProvider)) %>%
+  group_by(OriginalProvider) %>%
+  dplyr::mutate(
+    c = 1,
+    cumulation = cumsum(c)
+  )
+
+ggplot(providers, aes(x = DorCDate, y = cumulation, color=OriginalProvider)) +
+  geom_line() +
+  labs(x = "Date", y = "Cryonics Patients")
+```
+
+Interesting, but only relevant to someone looking for information about the history of cryonics. Most of these organizations are defunct. Let's just look at those that are currently servicing clients:
+
+Much better. I didn't realize that Alcor and CI are basically the same size, and almost always have been. Also, KrioRus is growing at almost exactly the same rate as the large American firms. Oregon Cryonics and YLSF are unlikely to grow as quickly, since they're either accepting memberships on a limited basis (in the former case) or not open to signups in general (in the latter case). That just leaves Trans Time the oddball. I'll be very interested to see if [Southern Cryonics](https://southerncryonics.com/) follows the same pattern as the other large providers, once it opens up.
+
+## Future Work
+
+There are tons more interesting things that could be done here, but the ones that interest me require additional data collection:
+
+* Cause of death is known for many cases, even if I haven't recorded it. This may be a useful or interesting field for further investigation, especially as patients begin to be revived.
+* Conditional on revivals happening, details on their ischemia periods and other post-mortem metrics may also be interesting.
+* I haven't made any attempt to geocode the location data, but perhaps some maps would be interesting.
+* Additional and more detailed information on Suspension Failures would be extremely useful. If we knew when the failure occurred, we could measure estimate the probability failure as a function of the amount of time in storage (which is generally a correct assumption--as things get older, they change).
+* Instead of viewing suspension failures on a case-centric basis, it would be much more informative to build some sort of survival model based on the years of successful storage.
+
+## Sources
+
+* http://www.alcor.org/cryonics/cryonics9207.txt
+* https://www.thisamericanlife.org/radio-archives/episode/354/mistakes-were-made/
+* http://www.alcor.org/Library/html/suspensionfailures.html
+* http://alcor.org/cases.html
+* http://www.cryonics.org/case-reports/
+* http://kriorus.ru/en/cryopreserved%20people
+* http://www.oregoncryo.com/caseReports.html
+* https://hpluspedia.org/wiki/Cryonics_patients
+* http://www.cryonet.org/cgi-bin/dsp.cgi?msg=3247
+* https://www.benbest.com/cryonics/history.html
+* http://www.cryonics.org/ci-landing/patient-details/
+* https://en.wikipedia.org/wiki/Category:Cryonically_preserved_people
