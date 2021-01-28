@@ -17,6 +17,12 @@ a[href*="//"]::after {
   padding-left: 2px;
   font-size: 0.8rem;
 }
+a[href*="nytimes.com"]::after {
+  content: "NYT";
+}
+a[href*="lesswrong.com"]::after {
+  content: "LW";
+}
 #toc {
   position: absolute;
   top: 8rem;
