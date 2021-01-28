@@ -106,17 +106,19 @@ Here the black line represents perfect predictions: if you predict delivery in n
 
 
 ```r
+library(broom)
+
 model <- lm(ActualLength ~ PredictionLength, data=predictions)
 
-model %>% tidy %>% kable
+model %>% tidy %>% kable(digits = 3)
 ```
 
 
 
-|term             |  estimate|  std.error|  statistic|   p.value|
-|:----------------|---------:|----------:|----------:|---------:|
-|(Intercept)      | 48.050221| 91.9896754|  0.5223436| 0.6038846|
-|PredictionLength |  1.823923|  0.1789673| 10.1913803| 0.0000000|
+|term             | estimate| std.error| statistic| p.value|
+|:----------------|--------:|---------:|---------:|-------:|
+|(Intercept)      |   48.050|    91.990|     0.522|   0.604|
+|PredictionLength |    1.824|     0.179|    10.191|   0.000|
 
 If there's a prediction coming from the Musk-verse, multiply the (upper-bound of the) amount of time by 1.824, and add 48 days.
 

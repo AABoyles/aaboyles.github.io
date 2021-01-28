@@ -108,9 +108,11 @@ ggplot(completePredictions, aes(PredictionLength, ActualLength, color=Company)) 
 Here the black line represents perfect predictions: if you predict delivery in n days, the black line represents delivery in exactly n days. Points below it represent early deliveries, points above it represent late deliveries (relative to the associated predictions). With this we can plainly see that the data matches the intuition that motivates this exercise: Musk's deliveries tend to take somewhat longer than he projects. But by how much, precisely?
 
 ```{r}
+library(broom)
+
 model <- lm(ActualLength ~ PredictionLength, data=predictions)
 
-model %>% tidy %>% kable
+model %>% tidy %>% kable(digits = 3)
 ```
 
 If there's a prediction coming from the Musk-verse, multiply the (upper-bound of the) amount of time by `r round(model$coefficients[2], 3)`, and add `r round(model$coefficients[1])` days.
