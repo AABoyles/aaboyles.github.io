@@ -23,6 +23,9 @@ a[href*="nytimes.com"]::after {
 a[href*="lesswrong.com"]::after {
   content: "LW";
 }
+a[href*="wikipedia.org"]::after {
+  content: "W";
+}
 #toc {
   position: absolute;
   top: 8rem;
