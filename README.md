@@ -49,7 +49,7 @@ In my spare time, I enjoy participating in forecasting competitions and augmenti
 
 ### Transhumanism
 
-* [Cryonic Demography](/Essays/portfolio/CryonicDemography.html)
+* [Cryonic Demography](/?q=pages/cryonic-demography.md)
 
 ### Errata
 
