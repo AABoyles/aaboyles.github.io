@@ -42,6 +42,7 @@ I also enjoy participating in forecasting competitions and augmenting the capabi
 
 ### Forecasting
 
+* [Asking Quality Forecasting Questions](/?q=pages/quality-forecasting-questions.md) - What makes a good forecasting question?
 * [Forecast Degradation Functions](/?q=pages/forecast-degradation.md) - Given a timespan within which an event may or may not happen and a time at which to predict it, how should we generate a forecast?
 * [The Elon Musk Forecast Correction Function](/?q=pages/musk-forecast-correction.md) - Elon Musk predicts a lot of stuff. He's usually early. We can fix that.
 * [Computing Metaculus Priors](/Essays/portfolio/ComputingMetaculusPriors.html) - Does Metaculus exhibit a systematic bias towards resolving questions one way or the other? Can we leverage this to make better predictions?
